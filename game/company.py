@@ -9,6 +9,7 @@ class Company:
         self.trucks = []
         self.drivers = []
         self.orders = []
+        self.assigned_orders = []  # Neue Liste für zugewiesene Aufträge
         self.completed_orders = []
 
     def buy_truck(self, model, capacity, fuel_efficiency, price, cargo_type):
@@ -50,8 +51,8 @@ class Company:
         self.orders.append(order)
 
     def complete_order(self, order, current_time):
-        if order in self.orders:
-            self.orders.remove(order)
+        if order in self.assigned_orders:
+            self.assigned_orders.remove(order)
             order.complete()
             penalty = order.calculate_penalty(current_time)
             final_payment = order.payment - penalty
@@ -61,18 +62,23 @@ class Company:
         return 0
 
     def get_available_trucks_for_order(self, order):
-        return [truck for truck in self.trucks if truck.cargo_type == order.cargo_type and truck.capacity >= order.amount]
+        return [truck for truck in self.trucks if truck.cargo_type == order.cargo_type and truck.capacity >= order.amount and truck.driver is not None]
 
     def assign_order_to_truck(self, order, truck):
+        if truck.driver is None:
+            return False  # Kein Fahrer zugewiesen
         if truck in self.get_available_trucks_for_order(order):
-            return truck.load_cargo(order.amount, order.cargo_type)
+            if truck.load_cargo(order.amount, order.cargo_type):
+                self.orders.remove(order)
+                self.assigned_orders.append(order)
+                return True
         return False
 
     def get_active_orders(self):
         return [order for order in self.orders if not order.is_completed]
 
     def get_overdue_orders(self, current_time):
-        return [order for order in self.orders if order.is_overdue(current_time)]
+        return [order for order in self.assigned_orders if order.is_overdue(current_time)]
 
     def calculate_total_revenue(self):
         return sum(order.payment for order in self.completed_orders)

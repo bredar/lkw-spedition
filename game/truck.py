@@ -27,6 +27,8 @@ class Truck:
     def load_cargo(self, amount, cargo_type):
         if self.cargo_type != cargo_type:
             return False
+        if self.current_cargo > 0:
+            return False  # LKW ist bereits beladen
         if self.current_cargo + amount <= self.capacity:
             self.current_cargo += amount
             return True

@@ -19,12 +19,13 @@ class PersonnelScreen(BaseScreen):
     def display_hire_driver_menu(self, available_drivers, company_money):
         self.stdscr.clear()
         self.draw_border()
-        self.stdscr.addstr(1, 2, "FAHRER EINSTELLEN", curses.color_pair(2) | curses.A_BOLD)
-        self.stdscr.addstr(2, 2, f"VERFUEGBARES GELD: {company_money}", curses.color_pair(2))
+        self.stdscr.addstr(1, 2, "FAHRER EINSTELLEN", curses.color_pair(1) | curses.A_BOLD)
+        self.stdscr.addstr(2, 2, f"VERFÜGBARES GELD: {company_money}", curses.color_pair(1))
         for i, driver in enumerate(available_drivers, start=1):
-            self.stdscr.addstr(i+3, 2, f"{i}. {driver}", curses.color_pair(2))
-        self.stdscr.addstr(len(available_drivers)+5, 2, "0. ZURUECK", curses.color_pair(2))
-        self.stdscr.addstr(len(available_drivers)+7, 2, "WAEHLE EINEN FAHRER ZUM EINSTELLEN (0 ZUM ABBRECHEN):", curses.color_pair(2))
+            self.stdscr.addstr(i+3, 2, f"{i}. Name: {driver.name}, Gehalt: {driver.salary}", curses.color_pair(1))
+            self.stdscr.addstr(i+4, 4, f"Fähigkeit: {driver.skill_level}, Sicherheit: {driver.safety}, Zuverlässigkeit: {driver.reliability}, Tempo: {driver.speed}", curses.color_pair(1))
+        self.stdscr.addstr(len(available_drivers)*2+5, 2, "0. ZURÜCK", curses.color_pair(1))
+        self.stdscr.addstr(len(available_drivers)*2+7, 2, "WÄHLE EINEN FAHRER ZUM EINSTELLEN (0 ZUM ABBRECHEN):", curses.color_pair(1))
         self.stdscr.refresh()
         return self.get_user_input()
 

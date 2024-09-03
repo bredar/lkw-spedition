@@ -21,6 +21,7 @@ class Game:
         self.cities = ["Berlin", "Hamburg", "München", "Köln", "Frankfurt", "Stuttgart"]
 
     def run(self):
+        self.screen.display_loading_screen()  # Zeige den Ladebildschirm an
         while True:
             self.screen.display_main_menu()
             choice = self.screen.get_user_input()
@@ -40,6 +41,7 @@ class Game:
         company_name = self.screen.get_company_name()
         self.player = Player(player_name)
         self.company = Company(company_name, self.player)
+        self.generate_orders()  # Aufträge generieren
         self.game_loop()
 
     def game_loop(self):
@@ -106,9 +108,10 @@ class Game:
         self.screen.display_message("VERKAUFEN VON LKWS NOCH NICHT IMPLEMENTIERT.")
 
     def manage_orders(self):
+        if not self.company.orders:
+            self.generate_orders()  # Aufträge generieren, wenn keine vorhanden sind
         while True:
-            self.order_screen.display_orders(self.company.orders)
-            choice = self.order_screen.get_user_input()
+            choice = self.order_screen.display_orders(self.company.orders)
             if choice == '0':
                 break
             elif choice.isdigit() and 1 <= int(choice) <= len(self.company.orders):
@@ -118,24 +121,28 @@ class Game:
                 self.screen.display_message("UNGUELTIGE EINGABE. BITTE WAEHLE EINE GUELTIGE NUMMER.")
 
     def assign_order_to_truck(self, order):
+        available_trucks = self.company.get_available_trucks_for_order(order)
+        if not available_trucks:
+            self.screen.display_message("KEIN PASSENDER LKW VERFÜGBAR FÜR DIESEN AUFTRAG!")
+            return
+
         while True:
-            order_choice, truck_choice = self.order_screen.display_assign_order_menu(self.company.orders, self.company.trucks)
-            if order_choice is None or truck_choice is None:
+            truck_choice = self.order_screen.display_assign_order_menu(order, available_trucks)
+            if truck_choice is None:
                 break
-            elif order_choice.isdigit() and 1 <= int(order_choice) <= len(self.company.orders):
-                selected_order = self.company.orders[int(order_choice) - 1]
-                if truck_choice.isdigit() and 1 <= int(truck_choice) <= len(self.company.trucks):
-                    truck = self.company.trucks[int(truck_choice) - 1]
-                    if truck.load_cargo(selected_order.amount, selected_order.cargo_type):
-                        self.screen.display_message(f"AUFTRAG {selected_order} DEM LKW {truck.model} ZUGEWIESEN!")
-                        self.save_game()
-                        break
-                    else:
-                        self.screen.display_message("LKW KANN DIESE FRACHT NICHT LADEN!")
+            elif truck_choice.isdigit() and 1 <= int(truck_choice) <= len(available_trucks):
+                truck = available_trucks[int(truck_choice) - 1]
+                if self.company.assign_order_to_truck(order, truck):
+                    self.screen.display_message(f"AUFTRAG {order} DEM LKW {truck.model} ZUGEWIESEN!")
+                    self.save_game()
+                    break
                 else:
-                    self.screen.display_message("UNGUELTIGE LKW-AUSWAHL!")
+                    error_message = f"FEHLER BEIM ZUWEISEN DES AUFTRAGS!\n"
+                    error_message += f"LKW: {truck}, Fahrer: {truck.driver}\n"
+                    error_message += f"Aktuelle Ladung: {truck.current_cargo}, Kapazität: {truck.capacity}"
+                    self.screen.display_message(error_message)
             else:
-                self.screen.display_message("UNGUELTIGE AUFTRAGS-AUSWAHL!")
+                self.screen.display_message("UNGÜLTIGE LKW-AUSWAHL!")
 
     def generate_orders(self):
         for _ in range(5):  # Generiere 5 zufällige Aufträge
@@ -157,12 +164,24 @@ class Game:
                 self.screen.display_message("UNGUELTIGE EINGABE. BITTE WAEHLE 1, 2, 3 ODER 0.")
 
     def hire_driver(self):
-        driver = Driver.generate_random_driver()
-        if self.company.hire_driver(driver):
-            self.screen.display_message(f"FAHRER {driver.name} EINGESTELLT!")
-            self.save_game()
-        else:
-            self.screen.display_message("NICHT GENUG GELD, UM DEN FAHRER EINZUSTELLEN!")
+        available_drivers = [Driver.generate_random_driver() for _ in range(3)]  # Generiere 3 zufällige Fahrer
+        while True:
+            choice = self.personnel_screen.display_hire_driver_menu(available_drivers, self.company.owner.money)
+            if choice == '0':
+                break
+            elif choice.isdigit() and 1 <= int(choice) <= len(available_drivers):
+                selected_driver = available_drivers[int(choice) - 1]
+                if self.company.hire_driver(selected_driver):
+                    self.screen.display_message(f"FAHRER {selected_driver.name} EINGESTELLT!\n"
+                                                f"Sicherheit: {selected_driver.safety}\n"
+                                                f"Zuverlässigkeit: {selected_driver.reliability}\n"
+                                                f"Tempo: {selected_driver.speed}")
+                    self.save_game()
+                    break
+                else:
+                    self.screen.display_message("NICHT GENUG GELD, UM DEN FAHRER EINZUSTELLEN!")
+            else:
+                self.screen.display_message("UNGUELTIGE EINGABE. BITTE WAEHLE EINE GUELTIGE NUMMER.")
 
     def fire_driver(self):
         if not self.company.drivers:
