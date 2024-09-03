@@ -17,6 +17,7 @@ class Truck:
         self.driver = None
         self.current_cargo = 0
         self.fuel = 100  # Startet mit vollem Tank
+        self.current_order = None
 
     def assign_driver(self, driver):
         self.driver = driver
@@ -50,6 +51,9 @@ class Truck:
             self.fuel -= fuel_needed
             return True
         return False
+
+    def assign_order(self, order):
+        self.current_order = order
 
     def __str__(self):
         return f"LKW: {self.model}, Typ: {self.cargo_type.value}, Kapazität: {self.capacity}t, Treibstoff: {self.fuel}%"

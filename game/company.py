@@ -11,6 +11,7 @@ class Company:
         self.orders = []
         self.assigned_orders = []  # Neue Liste für zugewiesene Aufträge
         self.completed_orders = []
+        self.backlog = []  # Hinzugefügt: Liste für angenommene Aufträge
 
     def buy_truck(self, model, capacity, fuel_efficiency, price, cargo_type):
         if self.owner.subtract_money(price):
@@ -82,6 +83,13 @@ class Company:
 
     def calculate_total_revenue(self):
         return sum(order.payment for order in self.completed_orders)
+
+    def accept_order(self, order):
+        if order in self.orders:
+            self.orders.remove(order)
+            self.backlog.append(order)
+            return True
+        return False
 
     def __str__(self):
         return f"Unternehmen: {self.name}, Besitzer: {self.owner.name}, LKWs: {len(self.trucks)}, Fahrer: {len(self.drivers)}, Aktive Aufträge: {len(self.get_active_orders())}"

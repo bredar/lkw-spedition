@@ -9,6 +9,8 @@ class Driver:
         self.reliability = reliability  # Zuverlässigkeit (1-10)
         self.speed = speed  # Fahrtempo (1-10)
         self.assigned_truck = None
+        self.in_training = False
+        self.training_days_left = 0
 
     def assign_truck(self, truck):
         self.assigned_truck = truck
@@ -30,3 +32,10 @@ class Driver:
         speed = random.randint(1, 10)
         salary = 2000 + (skill_level * 200) + (safety * 100) + (reliability * 100) + (speed * 100)
         return Driver(name, salary, skill_level, safety, reliability, speed)
+
+    def train(self):
+        self.skill_level = min(10, self.skill_level + 1)
+        self.safety = min(10, self.safety + 1)
+        self.reliability = min(10, self.reliability + 1)
+        self.speed = min(10, self.speed + 1)
+        self.salary = int(self.salary * 1.1)  # 10% Gehaltserhöhung nach der Weiterbildung

@@ -1,68 +1,48 @@
 import curses
 import time
 from game.truck import CargoType
+from .base_screen import BaseScreen
+from .main_menu_screen import MainMenuScreen
+from .company_menu_screen import CompanyMenuScreen
+from .personnel_screen import PersonnelScreen
+from .order_screen import OrderScreen
 
-class Screen:
+class Screen(BaseScreen):
     def __init__(self, stdscr):
-        self.stdscr = stdscr
-        curses.curs_set(0)  # Cursor ausblenden
-        self.height, self.width = stdscr.getmaxyx()
-        curses.start_color()
-        curses.use_default_colors()
-        
-        # C64 Blau (Hintergrund)
-        curses.init_color(curses.COLOR_BLUE, 0, 0, 1000)
-        
-        # C64 Hellblau (Text)
-        curses.init_color(curses.COLOR_CYAN, 529, 843, 843)
-        
-        curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLUE)  # Hellblau auf Blau
-        self.stdscr.bkgd(' ', curses.color_pair(1) | curses.A_BOLD)
+        super().__init__(stdscr)
+        self.main_menu_screen = MainMenuScreen(stdscr)
+        self.company_menu_screen = CompanyMenuScreen(stdscr)
+        self.personnel_screen = PersonnelScreen(stdscr)
+        self.order_screen = OrderScreen(stdscr)
 
     def display_loading_screen(self):
         self.stdscr.clear()
         self.draw_border()
         ascii_art = r"""
-    _     _  ____      __    ____  ____  ____  ____  __  ____  __  __   __ _   ____  __  _  _  _  _  _     __   ____  __  ____    __  ___  __ _ 
-    / \   / )(  _ \    /__\  (  _ \( ___)(  _ \(_  _)(  )(_  _)/  \(  ) (  ( \ / ___)(  )( \/ )/ )( \/ \   /  \ (_  _)/  \(  _ \  /  \/ __)(  / )
-    ) (  / /  ) __/   /(__)\  )___/ )__)  )   / _)(_  )(   )( (  O ))(__/)(  ( \\___ \ )( / \/ \) \/ (/ (  (  O ) _)((  O ))   / (  O)\__ \ )  ( 
-    \_)\/(_) (__)    (__)(__)(__) (____)(_)\_)(____)(__) (__) \__/(____)\__\_)(____/(__)\_)(_/\____/\_)   \__/ (__)  \__/(__\_)  \__/(___/(__\_)
+  _     _  __      __    ____  ____  ____  ____  __  ____  __  __   __ _  
+ / \   / \(  )    /__\  (  _ \( ___)(  _ \(_  _)(  )(  _ \(  )(  ) (  ( \ 
+( o ) ( o ))(__  /(__)\  )___/ )__)  )   / _)(_  )(  )___/ )( / (_/\/    /
+ \_/   \_/(____)(__)(__)(__)  (____)(_)\_)(____)(__)(__)  (__)\_____\_)__)
         """
-        self.stdscr.addstr(2, (self.width - len(ascii_art.split('\n')[1])) // 2, ascii_art, curses.color_pair(1) | curses.A_BOLD)
-        self.stdscr.addstr(self.height - 4, (self.width - 20) // 2, "BRED GAMES PRÄSENTIERT", curses.color_pair(1) | curses.A_BOLD)
-        self.stdscr.addstr(self.height - 2, (self.width - 20) // 2, "LÄDT...", curses.color_pair(1) | curses.A_BOLD)
+        lines = ascii_art.split('\n')
+        start_y = max(0, (self.height - len(lines)) // 2)
+        for i, line in enumerate(lines):
+            if start_y + i < self.height:
+                self.stdscr.addstr(start_y + i, max(0, (self.width - len(line)) // 2), line[:self.width-1], curses.color_pair(1) | curses.A_BOLD)
+        
+        if start_y + len(lines) + 2 < self.height:
+            self.stdscr.addstr(start_y + len(lines) + 2, max(0, (self.width - 20) // 2), "BRED GAMES PRÄSENTIERT", curses.color_pair(1) | curses.A_BOLD)
+        if start_y + len(lines) + 4 < self.height:
+            self.stdscr.addstr(start_y + len(lines) + 4, max(0, (self.width - 20) // 2), "LÄDT...", curses.color_pair(1) | curses.A_BOLD)
+        
         self.stdscr.refresh()
         time.sleep(3)  # Zeige den Ladebildschirm für 3 Sekunden an
 
     def display_main_menu(self):
-        self.stdscr.clear()
-        self.draw_border()
-        self.stdscr.addstr(2, 5, "LKW-SPEDITION SIMULATOR C64", curses.color_pair(1) | curses.A_BOLD)
-        self.stdscr.addstr(5, 5, "1. SPEDITION GRUENDEN", curses.color_pair(1))
-        self.stdscr.addstr(6, 5, "2. SPIEL LADEN", curses.color_pair(1))
-        self.stdscr.addstr(7, 5, "3. ANLEITUNG", curses.color_pair(1))
-        self.stdscr.addstr(8, 5, "4. BEENDEN", curses.color_pair(1))
-        self.stdscr.addstr(10, 5, "WAEHLE EINE OPTION (1-4):", curses.color_pair(1))
-        self.stdscr.refresh()
+        self.main_menu_screen.display()
 
-    def display_company_menu(self, company):
-        self.stdscr.clear()
-        self.draw_border()
-        self.stdscr.addstr(1, 2, f"SPEDITION: {company.name:<20}", curses.color_pair(1))
-        self.stdscr.addstr(1, 40, f"KONTO: {company.owner.money:<6}", curses.color_pair(1))
-        self.stdscr.addstr(3, 2, "1. FUHRPARK", curses.color_pair(1))
-        self.stdscr.addstr(4, 2, "2. PERSONAL", curses.color_pair(1))
-        self.stdscr.addstr(5, 2, "3. FINANZEN", curses.color_pair(1))
-        self.stdscr.addstr(3, 20, "4. AUFTRAEGE", curses.color_pair(1))
-        self.stdscr.addstr(4, 20, "5. ROUTENPLANUNG", curses.color_pair(1))
-        self.stdscr.addstr(5, 20, "6. WARTUNG", curses.color_pair(1))
-        self.stdscr.addstr(7, 2, "NACHRICHTEN:", curses.color_pair(1))
-        self.stdscr.addstr(8, 2, "NEUE AUFTRAEGE VERFUEGBAR", curses.color_pair(1))
-        self.stdscr.addstr(10, 2, "BEFEHL:", curses.color_pair(1))
-        self.stdscr.refresh()
-
-    def draw_border(self):
-        self.stdscr.border('|', '|', '-', '-', '+', '+', '+', '+')
+    def display_company_menu(self, company, current_date):
+        self.company_menu_screen.display(company, current_date)
 
     def display_fleet(self, trucks):
         self.stdscr.clear()
