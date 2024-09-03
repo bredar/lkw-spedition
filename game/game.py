@@ -123,7 +123,7 @@ class Game:
                 order = self.company.orders[int(choice) - 1]
                 if self.company.accept_order(order):
                     self.screen.display_message(f"Auftrag angenommen und ins Backlog verschoben.")
-                    self.company.orders.remove(order)  # Entferne den Auftrag aus der orders-Liste
+                    self.company.orders.remove(order)  # Entferne den Auftrag aus der Hauptliste
                 else:
                     self.screen.display_message("Fehler beim Annehmen des Auftrags.")
             else:
@@ -178,7 +178,8 @@ class Game:
         self.save_game()
 
     def generate_orders(self):
-        for _ in range(5):
+        num_new_orders = max(0, 5 - len(self.company.orders))  # Generiere neue Aufträge, bis insgesamt 5 verfügbar sind
+        for _ in range(num_new_orders):
             self.company.add_order(Order.generate_random_order(self.cities, self.current_date))
 
     def manage_personnel(self):
@@ -378,3 +379,6 @@ class Game:
 
     def generate_new_drivers(self):
         pass
+
+    def view_accepted_orders(self):
+        self.company_screen.display_accepted_orders(self.company.backlog)
