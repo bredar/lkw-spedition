@@ -1,0 +1,32 @@
+lkw_spedition_simulator/
+│
+├── main.py
+├── requirements.txt
+├── README.md
+│
+├── game/
+│   ├── __init__.py
+│   ├── game.py
+│   ├── player.py
+│   ├── company.py
+│   ├── truck.py
+│   ├── driver.py
+│   ├── route.py
+│   └── order.py
+│
+├── ui/
+│   ├── __init__.py
+│   ├── screen.py
+│   ├── menu.py
+│   └── graphics.py
+│
+├── data/
+│   ├── cities.json
+│   ├── trucks.json
+│   └── orders.json
+│
+└── tests/
+    ├── __init__.py
+    ├── test_game.py
+    ├── test_player.py
+    └── test_route.py
