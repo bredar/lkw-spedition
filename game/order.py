@@ -1,5 +1,6 @@
 from .truck import CargoType
 import random
+from datetime import datetime, timedelta
 
 class Order:
     def __init__(self, start_city, end_city, cargo_type, amount, payment, deadline):

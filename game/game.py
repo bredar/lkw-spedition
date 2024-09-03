@@ -2,6 +2,9 @@ from .player import Player
 from .company import Company
 from .order import Order
 from .truck import Truck, CargoType
+from .driver import Driver
+from ui.personnel_screen import PersonnelScreen
+from ui.order_screen import OrderScreen
 import random
 from datetime import datetime, timedelta
 import pickle
@@ -10,6 +13,8 @@ import os
 class Game:
     def __init__(self, screen):
         self.screen = screen
+        self.personnel_screen = PersonnelScreen(screen.stdscr)
+        self.order_screen = OrderScreen(screen.stdscr)
         self.player = None
         self.company = None
         self.current_time = datetime.now()
@@ -101,22 +106,102 @@ class Game:
         self.screen.display_message("VERKAUFEN VON LKWS NOCH NICHT IMPLEMENTIERT.")
 
     def manage_orders(self):
-        if not self.company.orders:
-            self.generate_orders()
-        self.screen.display_orders(self.company.orders)
-        choice = self.screen.get_user_input()
-        if choice.isdigit() and 0 < int(choice) <= len(self.company.orders):
-            order = self.company.orders[int(choice) - 1]
-            # Hier könnten wir die Logik zum Annehmen eines Auftrags implementieren
+        while True:
+            self.order_screen.display_orders(self.company.orders)
+            choice = self.order_screen.get_user_input()
+            if choice == '0':
+                break
+            elif choice.isdigit() and 1 <= int(choice) <= len(self.company.orders):
+                order = self.company.orders[int(choice) - 1]
+                self.assign_order_to_truck(order)
+            else:
+                self.screen.display_message("UNGUELTIGE EINGABE. BITTE WAEHLE EINE GUELTIGE NUMMER.")
+
+    def assign_order_to_truck(self, order):
+        while True:
+            order_choice, truck_choice = self.order_screen.display_assign_order_menu(self.company.orders, self.company.trucks)
+            if order_choice is None or truck_choice is None:
+                break
+            elif order_choice.isdigit() and 1 <= int(order_choice) <= len(self.company.orders):
+                selected_order = self.company.orders[int(order_choice) - 1]
+                if truck_choice.isdigit() and 1 <= int(truck_choice) <= len(self.company.trucks):
+                    truck = self.company.trucks[int(truck_choice) - 1]
+                    if truck.load_cargo(selected_order.amount, selected_order.cargo_type):
+                        self.screen.display_message(f"AUFTRAG {selected_order} DEM LKW {truck.model} ZUGEWIESEN!")
+                        self.save_game()
+                        break
+                    else:
+                        self.screen.display_message("LKW KANN DIESE FRACHT NICHT LADEN!")
+                else:
+                    self.screen.display_message("UNGUELTIGE LKW-AUSWAHL!")
+            else:
+                self.screen.display_message("UNGUELTIGE AUFTRAGS-AUSWAHL!")
 
     def generate_orders(self):
         for _ in range(5):  # Generiere 5 zufällige Aufträge
             self.company.add_order(Order.generate_random_order(self.cities, self.current_time))
 
-    # Platzhalter-Methoden für noch nicht implementierte Funktionen
     def manage_personnel(self):
-        self.screen.display_message("Personalverwaltung noch nicht implementiert.")
+        while True:
+            self.personnel_screen.display_personnel_menu(self.company.drivers)
+            choice = self.personnel_screen.get_user_input()
+            if choice == '1':
+                self.hire_driver()
+            elif choice == '2':
+                self.fire_driver()
+            elif choice == '3':
+                self.assign_driver_to_truck()
+            elif choice == '0':
+                break
+            else:
+                self.screen.display_message("UNGUELTIGE EINGABE. BITTE WAEHLE 1, 2, 3 ODER 0.")
 
+    def hire_driver(self):
+        driver = Driver.generate_random_driver()
+        if self.company.hire_driver(driver):
+            self.screen.display_message(f"FAHRER {driver.name} EINGESTELLT!")
+            self.save_game()
+        else:
+            self.screen.display_message("NICHT GENUG GELD, UM DEN FAHRER EINZUSTELLEN!")
+
+    def fire_driver(self):
+        if not self.company.drivers:
+            self.screen.display_message("KEINE FAHRER ZUM ENTLASSEN!")
+            return
+        
+        choice = self.personnel_screen.display_fire_driver_menu(self.company.drivers)
+        if choice.isdigit() and 1 <= int(choice) <= len(self.company.drivers):
+            driver = self.company.drivers[int(choice) - 1]
+            if self.company.fire_driver(driver):
+                self.screen.display_message(f"FAHRER {driver.name} ENTLASSEN!")
+                self.save_game()
+            else:
+                self.screen.display_message("FEHLER BEIM ENTLASSEN DES FAHRERS!")
+        else:
+            self.screen.display_message("UNGUELTIGE EINGABE!")
+
+    def assign_driver_to_truck(self):
+        if not self.company.drivers or not self.company.trucks:
+            self.screen.display_message("NICHT GENUG FAHRER ODER LKWS!")
+            return
+        
+        driver_choice, truck_choice = self.personnel_screen.display_assign_driver_menu(self.company.drivers, self.company.trucks)
+        if driver_choice is None or truck_choice is None:
+            return
+        elif driver_choice.isdigit() and 1 <= int(driver_choice) <= len(self.company.drivers):
+            driver = self.company.drivers[int(driver_choice) - 1]
+            if truck_choice.isdigit() and 1 <= int(truck_choice) <= len(self.company.trucks):
+                truck = self.company.trucks[int(truck_choice) - 1]
+                driver.assign_truck(truck)
+                truck.assign_driver(driver)
+                self.screen.display_message(f"FAHRER {driver.name} DEM LKW {truck.model} ZUGEWIESEN!")
+                self.save_game()
+            else:
+                self.screen.display_message("UNGUELTIGE LKW-AUSWAHL!")
+        else:
+            self.screen.display_message("UNGUELTIGE FAHRER-AUSWAHL!")
+
+    # Platzhalter-Methoden für noch nicht implementierte Funktionen
     def view_finances(self):
         self.screen.display_message("Finanzübersicht noch nicht implementiert.")
 

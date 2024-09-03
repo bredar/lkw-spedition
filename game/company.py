@@ -1,5 +1,6 @@
 from .truck import Truck, CargoType
 from .order import Order
+from .driver import Driver
 
 class Company:
     def __init__(self, name, owner):
@@ -24,14 +25,17 @@ class Company:
             return True
         return False
 
-    def hire_driver(self, name, salary, skill_level):
-        driver = Driver(name, salary, skill_level)
-        self.drivers.append(driver)
-        return driver
+    def hire_driver(self, driver):
+        if self.owner.subtract_money(driver.salary):
+            self.drivers.append(driver)
+            return True
+        return False
 
     def fire_driver(self, driver):
         if driver in self.drivers:
             self.drivers.remove(driver)
+            if driver.assigned_truck:
+                driver.assigned_truck.remove_driver()
             return True
         return False
 

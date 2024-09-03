@@ -14,7 +14,8 @@ class Driver:
         self.assigned_truck = None
 
     def __str__(self):
-        return f"Fahrer: {self.name}, Fähigkeit: {self.skill_level}, Gehalt: {self.salary}"
+        assigned = f", LKW: {self.assigned_truck.model}" if self.assigned_truck else ", Nicht zugewiesen"
+        return f"Fahrer: {self.name}, Fähigkeit: {self.skill_level}, Gehalt: {self.salary}{assigned}"
 
     @staticmethod
     def generate_random_driver():
